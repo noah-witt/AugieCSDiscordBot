@@ -1,4 +1,5 @@
 import { createSchema, Type, typedModel,ExtractDoc, ExtractProps } from 'ts-mongoose';
+import { type } from 'os';
 const PersonSchema = createSchema(
   {
     name: Type.string({ required: true }),
@@ -7,17 +8,16 @@ const PersonSchema = createSchema(
   { _id: true, timestamps: true }
 );
 export const Person = typedModel('Person', PersonSchema, undefined, undefined, {
-  findByEmail: function(email) {
+  findByEmail: function(email: string) {
     return this.find({ email });
   }
 });
 export type PersonDoc = ExtractDoc<typeof PersonSchema>;
 export type PersonProps = ExtractProps<typeof PersonSchema>;
-const matchTypes = ['team', 'individual'] as const;
 const MatchSchema = createSchema(
   {
-     type: Type.string({ required: true, enum: matchTypes }),
-     members: Type.array().of(Type.object().of({
+    name: Type.string({required: true}),
+    members: Type.array().of(Type.object().of({
       people: Type.array().of(Type.ref(Type.objectId()).to('Person', PersonSchema)),
       points: Type.number({ required: true }),
       win: Type.boolean({ required: true}),
