@@ -3,7 +3,8 @@ import { type } from 'os';
 const PersonSchema = createSchema(
   {
     name: Type.string({ required: true }),
-    email: Type.string({unique: true, required: true, index: true})
+    email: Type.string({unique: true, required: true, index: true}),
+    points: Type.number({default: 0, required: true, index:true})
   },
   { _id: true, timestamps: true }
 );
@@ -15,19 +16,14 @@ export const Person = typedModel('Person', PersonSchema, undefined, undefined, {
 export type PersonDoc = ExtractDoc<typeof PersonSchema>;
 export type PersonProps = ExtractProps<typeof PersonSchema>;
 
-export const teamSchema = createSchema(
-  {
-    people: Type.array().of(Type.ref(Type.objectId()).to('Person', PersonSchema)),
-    points: Type.number({ required: true }),
-    win: Type.boolean({ required: true}),
-  },
-  { _id: true, timestamps: true }
-);
-export const Team = typedModel('Team', teamSchema);
+
 const MatchSchema = createSchema(
   {
     name: Type.string({required: true}),
-    members: Type.array().of(Type.schema().of(teamSchema)),
+    members: Type.array().of({
+      people: Type.array().of(Type.ref(Type.objectId()).to('Person', PersonSchema)),
+      points: Type.number({ required: true })
+    }),
   },
   { _id: true, timestamps: true }
 );
