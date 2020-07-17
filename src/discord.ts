@@ -29,20 +29,58 @@ async function printRank(m: discord.Message){
     return true;
 }  
 
+async function processDm(m: discord.Message){
+    switch(m.content) {
+        case "rank":
+            printRank(m);
+            return;
+    }
+    if(m.content.startsWith("inspect ")) {
+        let eml = m.content.substr("adjust ".length);
+        eml = eml.trim().toLowerCase();
+        inspectUser(m,eml);
+        return;
+    }
+    m.channel.send("rank: prints rankings.\n inspect {email}: inspects a user.")
+}
+
+async function inspectUser(m: discord.Message, email: string) {
+    try {
+        let response = await db.inspectUser(email);
+        if(!response.worked) m.channel.send("Something went wrong.");
+        let msg = response.name+" <"+response.email+">\n\n"+
+        "points: "+response.points+" matches:"+response.events.length+"\n"+
+        "matches list\n\n";
+        response.events.forEach((e)=>{
+            msg+="name: "+e.name+"\t date:"+e.date+"\t points:"+e.points+"\t with:"+e.with+"\n";
+        });
+        m.channel.send(msg);
+    } catch {
+        m.channel.send("something went wrong.");
+    }
+}
 
 client.on('message', async message => {
     //dont look at anything from bots.
     if(message.author.bot) return;
-    //if(message.type)
+
+    //short circuit this on dm.
+    if(message.channel.type=="dm") {
+        processDm(message);
+        return;
+    } 
     //only look at this channel.
     if(message.channel.valueOf()!=process.env.discordChannelId) return;
 
     switch(message.content) {
         case "help": message.channel.send(  "Hello. Your talking to the Augie CS club ranking bot. \n\n"+
+                                            "Anyone can DM me some commands"+
                                             "Commands\n\n"+
                                             "----------\n\n"+
                                             "create user {email} {name}. Creates user with email and name\n"+
-                                            "adjust {email,email2,email3} {points} {adjustment name}. adds or removes points the emails should be comma seperated with no spaces.\n");
+                                            "adjust {email,email2,email3} {points} {adjustment name}. adds or removes points the emails should be comma seperated with no spaces.\n"+
+                                            "rank. prints the rankings"+
+                                            "inspect {email} inspects the user. prints all results.");
             return;
         case "rank":
             printRank(message);
@@ -86,5 +124,10 @@ client.on('message', async message => {
         const response = await db.newAdjustment(cmds[2], cmds[0].split(','), points);
         if(!processDbResponse(response, message.channel)) return;
         return;
+    }
+    if(message.content.startsWith("inspect ")) {
+        let eml = message.content.substr("adjust ".length);
+        eml = eml.trim().toLowerCase();
+        inspectUser(message,eml);
     }
   });

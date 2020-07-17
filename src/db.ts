@@ -1,4 +1,5 @@
 import * as mongoose from 'mongoose';
+import * as moment from 'moment';
 mongoose.connect(process.env.MONGO, {
     useNewUrlParser: true,
     useUnifiedTopology: true
@@ -11,6 +12,44 @@ export interface matchObj {
 export interface teamObj {
     people: string[];
     points: number;
+}
+
+export interface inspectUserResults {
+    worked: boolean;
+    points: number;
+    name: string;
+    email: string;
+    events: {name: string, points: number, with:string[], date:string}[]
+}
+
+export async function inspectUser(email: string): Promise<inspectUserResults> {
+    try {
+        email = email.trim().toLowerCase();
+        let person = await models.Person.findOne({email:email}).exec();
+        let matches = await models.Match.find({"people": person._id}).sort({createdAt: -1}).populate({path: "people", model:"Person"}).exec();
+        if(matches.length<1) return {worked: false, points:0, events:[], name:null, email:null};
+        let events = [];
+        let pointCounter =0;
+        matches.forEach((e)=>{
+            const event = {name: e.name, points: e.points, with:[], date: moment(e.createdAt).format('MMMM Do YYYY, h:mm:ss a')};
+            //add the other people.
+            for(let i=0;i<e.people.length;i++) {
+                const target = e.people[i];
+                if(target instanceof mongoose.mongo.ObjectID) return {worked: false, points:0, events:[], name:null, email:null}; //give up if it fails to populate.
+                if(target.email == email) continue; //skip this if it is the inspected user.
+                event.with.push(target.name+" <"+target.email+">");
+            }
+            events.push(event);
+            pointCounter+=event.points;
+        });
+        if(pointCounter!=person.points) {
+            console.log("POINTS DO NOT MATCH!!!! DATABASE ERROR. User "+person.email+" counter:"+pointCounter+", userEntry:"+person.points);
+        }
+        return {worked: true, points:person.points, events: events, name:person.name, email:person.email};
+    } catch {
+        return {worked: false, points:0, events:[], name:null, email:null};
+    }
+    return {worked: false, points:0, events:[], name:null, email:null};
 }
 
 export interface highScoreGetResponse {
@@ -55,10 +94,7 @@ export async function newAdjustment(title: string, emails: string[], points: num
     try {
         const e = new models.Match();
         e.name = title;
-        e.members.push({
-            people: [],
-            points: points,
-        });
+        e.points =points;
         //assert e.members.length ==1;
         for (let i = 0; i < emails.length; i++) {
             let email = emails[i];
@@ -68,7 +104,7 @@ export async function newAdjustment(title: string, emails: string[], points: num
             if (emailRecords.length < 1) return {worked: false,msg: "email \"" + email + "\"  not present in the database."};
             if (emailRecords.length > 1) return {worked: false,msg: "email \"" + email + "\" contains more than one entry in the database. This must be fixed manually using mongoDB."};
             //assert emailRecords.length ==1;
-            e.members[0].people.push(emailRecords[0]);
+            e.people.push(emailRecords[0]);
             //adjust the user record
             emailRecords[0].points+=points;
             await emailRecords[0].save();

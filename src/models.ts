@@ -20,10 +20,8 @@ export type PersonProps = ExtractProps<typeof PersonSchema>;
 const MatchSchema = createSchema(
   {
     name: Type.string({required: true}),
-    members: Type.array().of({
-      people: Type.array().of(Type.ref(Type.objectId()).to('Person', PersonSchema)),
-      points: Type.number({ required: true })
-    }),
+    people: Type.array().of(Type.ref(Type.objectId()).to('Person', PersonSchema)),
+    points: Type.number({ required: true })
   },
   { _id: true, timestamps: true }
 );
