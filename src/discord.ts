@@ -91,12 +91,12 @@ client.on('message', async message => {
 
     switch(message.content) {
         case "help": message.channel.send(  "Hello. Your talking to the Augie CS club ranking bot. \n\n"+
-                                            "Anyone can DM me some commands"+
-                                            "Commands\n\n"+
-                                            "----------\n\n"+
+                                            "Anyone can DM me some commands\n"+
+                                            "Commands\n"+
+                                            "----------\n"+
                                             "create user {email} {name}. Creates user with email and name\n"+
                                             "adjust {email,email2,email3} {points} {adjustment name}. adds or removes points the emails should be comma seperated with no spaces.\n"+
-                                            "rank. prints the rankings"+
+                                            "rank. prints the rankings\n"+
                                             "inspect {email} inspects the user. prints all results.\n"+
                                             "inspect show id {email}. inspects the user and prints ids for events.\n"+
                                             "rm recent. removes the most recent change. Think of this as undo.\n"+
