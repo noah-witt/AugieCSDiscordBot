@@ -5,6 +5,7 @@ mongoose.connect(process.env.MONGO, {
     useUnifiedTopology: true
 });
 import * as models from './models';
+import { model } from 'mongoose';
 export interface matchObj {
     name: string;
     teams: teamObj[];
@@ -19,7 +20,7 @@ export interface inspectUserResults {
     points: number;
     name: string;
     email: string;
-    events: {name: string, points: number, with:string[], date:string}[]
+    events: {name: string, points: number, with:string[], date:string, id:string}[]
 }
 
 export async function inspectUser(email: string): Promise<inspectUserResults> {
@@ -31,7 +32,7 @@ export async function inspectUser(email: string): Promise<inspectUserResults> {
         let events = [];
         let pointCounter =0;
         matches.forEach((e)=>{
-            const event = {name: e.name, points: e.points, with:[], date: moment(e.createdAt).format('MMMM Do YYYY, h:mm:ss a')};
+            const event = {name: e.name, points: e.points, with:[], date: moment(e.createdAt).format('MMMM Do YYYY, h:mm:ss a'), id:e._id};
             //add the other people.
             for(let i=0;i<e.people.length;i++) {
                 const target = e.people[i];
@@ -136,4 +137,27 @@ export async function newPerson(email: string, name: string): Promise < dbRespon
         return {worked: false, msg:"there was some database error."};
     }
     return {worked: true};
+}
+
+export interface removedEventResponse{
+    worked: boolean;
+    event?:{name: string, points: number, date:string};
+}
+export async function removeMostRecentMatch(): Promise<removedEventResponse> {
+    const responses =  await models.Match.find().sort({createdAt: -1}).limit(1).exec();
+    if(responses.length!==1) return {worked: false};
+    return await removeByMatchId(responses[0]._id);
+}
+
+export async function removeByMatchId(id: any): Promise<removedEventResponse> {
+    const response =  await models.Match.findById(id).exec();
+    for(let i=0; i<response.people.length;i++){
+        let target = response.people[i];
+        //subtract the points
+        const user = await models.Person.findById(target).exec();
+        user.points-=response.points;
+        user.save();
+    }
+    models.Match.findByIdAndDelete(response._id).exec();
+    return {worked: true, event:{name: response.name, points: response.points, date: moment(response.createdAt).format('MMMM Do YYYY, h:mm:ss a')}}
 }

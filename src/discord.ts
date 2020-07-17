@@ -36,15 +36,21 @@ async function processDm(m: discord.Message){
             return;
     }
     if(m.content.startsWith("inspect ")) {
-        let eml = m.content.substr("adjust ".length);
+        let eml = m.content.substr("inspect ".length);
         eml = eml.trim().toLowerCase();
         inspectUser(m,eml);
+        return;
+    }
+    if(m.content.startsWith("inspect show id ")) {
+        let eml = m.content.substr("inspect show id ".length);
+        eml = eml.trim().toLowerCase();
+        inspectUser(m,eml,true);
         return;
     }
     m.channel.send("rank: prints rankings.\n inspect {email}: inspects a user.")
 }
 
-async function inspectUser(m: discord.Message, email: string) {
+async function inspectUser(m: discord.Message, email: string, showID?: boolean) {
     try {
         let response = await db.inspectUser(email);
         if(!response.worked) m.channel.send("Something went wrong.");
@@ -52,12 +58,23 @@ async function inspectUser(m: discord.Message, email: string) {
         "points: "+response.points+" matches:"+response.events.length+"\n"+
         "matches list\n\n";
         response.events.forEach((e)=>{
-            msg+="name: "+e.name+"\t date:"+e.date+"\t points:"+e.points+"\t with:"+e.with+"\n";
+            msg+="name: "+e.name+"\t date:"+e.date+"\t points:"+e.points+"\t with:"+e.with;
+            if(showID==true) msg+=" id:"+e.id;
+            msg+="\n";
         });
         m.channel.send(msg);
     } catch {
         m.channel.send("something went wrong.");
     }
+}
+
+function printRmMsg(dbMsg: db.removedEventResponse, m: discord.Message){
+    if(!dbMsg.worked){
+        m.channel.send("did not work.");
+        return;
+    }
+    if(typeof dbMsg.event == 'undefined') return;
+    m.channel.send("removed record:\n name: "+dbMsg.event.name+" date:"+dbMsg.event.date+" points:"+dbMsg.event.points); 
 }
 
 client.on('message', async message => {
@@ -80,10 +97,17 @@ client.on('message', async message => {
                                             "create user {email} {name}. Creates user with email and name\n"+
                                             "adjust {email,email2,email3} {points} {adjustment name}. adds or removes points the emails should be comma seperated with no spaces.\n"+
                                             "rank. prints the rankings"+
-                                            "inspect {email} inspects the user. prints all results.");
+                                            "inspect {email} inspects the user. prints all results.\n"+
+                                            "inspect show id {email}. inspects the user and prints ids for events.\n"+
+                                            "rm recent. removes the most recent change. Think of this as undo.\n"+
+                                            "rm {id}. removes the event with the stated id." );
             return;
         case "rank":
             printRank(message);
+            return;
+        case "rm recent":
+            const rmMsg = await db.removeMostRecentMatch();
+            printRmMsg(rmMsg, message);
             return;
     }
     if(message.content.startsWith("create user ")) {
@@ -125,9 +149,23 @@ client.on('message', async message => {
         if(!processDbResponse(response, message.channel)) return;
         return;
     }
+    if(message.content.startsWith("inspect show id ")) {
+        let eml = message.content.substr("inspect show id ".length);
+        eml = eml.trim().toLowerCase();
+        inspectUser(message,eml,true);
+        return;
+    }
     if(message.content.startsWith("inspect ")) {
-        let eml = message.content.substr("adjust ".length);
+        let eml = message.content.substr("inspect ".length);
         eml = eml.trim().toLowerCase();
         inspectUser(message,eml);
+        return;
     }
+    if(message.content.startsWith("rm ")) {
+        let id = message.content.substr("rm ".length);
+        const rmMsg = await db.removeByMatchId(id);
+        printRmMsg(rmMsg, message);
+        return;
+    }
+    message.channel.send("Ask for help by sending \"help\".");
   });
