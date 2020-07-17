@@ -14,14 +14,20 @@ export const Person = typedModel('Person', PersonSchema, undefined, undefined, {
 });
 export type PersonDoc = ExtractDoc<typeof PersonSchema>;
 export type PersonProps = ExtractProps<typeof PersonSchema>;
+
+export const teamSchema = createSchema(
+  {
+    people: Type.array().of(Type.ref(Type.objectId()).to('Person', PersonSchema)),
+    points: Type.number({ required: true }),
+    win: Type.boolean({ required: true}),
+  },
+  { _id: true, timestamps: true }
+);
+export const Team = typedModel('Team', teamSchema);
 const MatchSchema = createSchema(
   {
     name: Type.string({required: true}),
-    members: Type.array().of(Type.object().of({
-      people: Type.array().of(Type.ref(Type.objectId()).to('Person', PersonSchema)),
-      points: Type.number({ required: true }),
-      win: Type.boolean({ required: true}),
-    })),
+    members: Type.array().of(Type.schema().of(teamSchema)),
   },
   { _id: true, timestamps: true }
 );
