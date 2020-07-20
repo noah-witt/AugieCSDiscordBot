@@ -20,6 +20,7 @@ export interface inspectUserResults {
     points: number;
     name: string;
     email: string;
+    id: string;
     events: {name: string, points: number, with:string[], date:string, id:string}[]
 }
 
@@ -28,9 +29,9 @@ export async function inspectUserById(id: string): Promise<inspectUserResults> {
         let person = await models.Person.findById(id).exec();
         return await inspectUserBack(person);
     } catch {
-        return {worked: false, points:0, events:[], name:null, email:null};
+        return {worked: false, points:0, events:[], name:null, email:null, id:null};
     }
-    return {worked: false, points:0, events:[], name:null, email:null};
+    return {worked: false, points:0, events:[], name:null, email:null, id:null};
 } 
 
 export async function inspectUser(email: string): Promise<inspectUserResults> {
@@ -39,14 +40,14 @@ export async function inspectUser(email: string): Promise<inspectUserResults> {
         let person = await models.Person.findOne({email:email}).exec();
         return await inspectUserBack(person);
     } catch {
-        return {worked: false, points:0, events:[], name:null, email:null};
+        return {worked: false, points:0, events:[], name:null, email:null, id:null};
     }
-    return {worked: false, points:0, events:[], name:null, email:null};
+    return {worked: false, points:0, events:[], name:null, email:null, id:null};
 }
 async function inspectUserBack(person: models.PersonDoc): Promise<inspectUserResults> {
     try {
         let matches = await models.Match.find({"people": person._id}).sort({createdAt: -1}).populate({path: "people", model:"Person"}).exec();
-        if(matches.length<1) return {worked: false, points:0, events:[], name:null, email:null};
+        if(matches.length<1) return {worked: false, points:0, events:[], name:null, email:null, id:null};
         let events = [];
         let pointCounter =0;
         matches.forEach((e)=>{
@@ -64,16 +65,16 @@ async function inspectUserBack(person: models.PersonDoc): Promise<inspectUserRes
         if(pointCounter!=person.points) {
             console.log("POINTS DO NOT MATCH!!!! DATABASE ERROR. User "+person.email+" counter:"+pointCounter+", userEntry:"+person.points);
         }
-        return {worked: true, points:person.points, events: events, name:person.name, email:person.email};
+        return {worked: true, points:person.points, events: events, name:person.name, email:person.email, id:person._id};
     } catch {
-        return {worked: false, points:0, events:[], name:null, email:null};
+        return {worked: false, points:0, events:[], name:null, email:null, id:null};
     }
-    return {worked: false, points:0, events:[], name:null, email:null};
+    return {worked: false, points:0, events:[], name:null, email:null, id:null};;
 }
 
 export interface highScoreGetResponse {
     worked: boolean;
-    results: {name: string; email:string; score:number;}[];
+    results: {name: string; email:string; score:number; id: string;}[];
 }
 
 /**
@@ -89,7 +90,7 @@ export async function getHighScores(results: number): Promise<highScoreGetRespon
         let output: highScoreGetResponse = {worked: true, results:[]}
         for(let i=0;i<result.length; i++) {
             let targetUser = result[i];
-            output.results.push({name: targetUser.name, email: targetUser.email, score: targetUser.points});
+            output.results.push({name: targetUser.name, email: targetUser.email, score: targetUser.points, id: targetUser._id});
         }
         return output;
     } catch {
