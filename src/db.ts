@@ -23,10 +23,28 @@ export interface inspectUserResults {
     events: {name: string, points: number, with:string[], date:string, id:string}[]
 }
 
+export async function inspectUserById(id: string): Promise<inspectUserResults> {
+    try {
+        let person = await models.Person.findById(id).exec();
+        return await inspectUserBack(person);
+    } catch {
+        return {worked: false, points:0, events:[], name:null, email:null};
+    }
+    return {worked: false, points:0, events:[], name:null, email:null};
+} 
+
 export async function inspectUser(email: string): Promise<inspectUserResults> {
     try {
         email = email.trim().toLowerCase();
         let person = await models.Person.findOne({email:email}).exec();
+        return await inspectUserBack(person);
+    } catch {
+        return {worked: false, points:0, events:[], name:null, email:null};
+    }
+    return {worked: false, points:0, events:[], name:null, email:null};
+}
+async function inspectUserBack(person: models.PersonDoc): Promise<inspectUserResults> {
+    try {
         let matches = await models.Match.find({"people": person._id}).sort({createdAt: -1}).populate({path: "people", model:"Person"}).exec();
         if(matches.length<1) return {worked: false, points:0, events:[], name:null, email:null};
         let events = [];
@@ -37,7 +55,7 @@ export async function inspectUser(email: string): Promise<inspectUserResults> {
             for(let i=0;i<e.people.length;i++) {
                 const target = e.people[i];
                 if(target instanceof mongoose.mongo.ObjectID) return {worked: false, points:0, events:[], name:null, email:null}; //give up if it fails to populate.
-                if(target.email == email) continue; //skip this if it is the inspected user.
+                if(target.email == person.email) continue; //skip this if it is the inspected user.
                 event.with.push(target.name+" <"+target.email+">");
             }
             events.push(event);
@@ -160,4 +178,8 @@ export async function removeByMatchId(id: any): Promise<removedEventResponse> {
     }
     models.Match.findByIdAndDelete(response._id).exec();
     return {worked: true, event:{name: response.name, points: response.points, date: moment(response.createdAt).format('MMMM Do YYYY, h:mm:ss a')}}
+}
+
+export function validateObjectID(id: string): boolean {
+    return mongoose.mongo.ObjectID.isValid(id);
 }
