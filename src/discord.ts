@@ -95,7 +95,7 @@ client.on('message', async message => {
                                             "Commands\n"+
                                             "----------\n"+
                                             "create user {email} {name}. Creates user with email and name\n"+
-                                            "adjust {email,email2,email3} {points} {adjustment name}. adds or removes points the emails should be comma seperated with no spaces.\n"+
+                                            "adjust {email,email2,email3} {points} {adjustment name}. adds or removes points the emails should be comma separated with no spaces.\n"+
                                             "rank. prints the rankings\n"+
                                             "inspect {email} inspects the user. prints all results.\n"+
                                             "inspect show id {email}. inspects the user and prints ids for events.\n"+
