@@ -58,7 +58,7 @@ async function inspectUser(m: discord.Message, email: string, showID?: boolean) 
         "points: "+response.points+" matches:"+response.events.length+"\n"+
         "matches list\n\n";
         response.events.forEach((e)=>{
-            msg+="name: "+e.name+"\t date:"+e.date+"\t points:"+e.points+"\t with:"+e.with;
+            msg+="name: "+e.name+"\t date:"+e.date+"\t points:"+e.points+"\t with: "+(e.with.length==0?'none':e.with.toString());
             if(showID==true) msg+=" id:"+e.id;
             msg+="\n";
         });

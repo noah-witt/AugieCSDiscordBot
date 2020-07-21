@@ -1,6 +1,6 @@
 import * as express from 'express';
 import * as db from './db';
-import * as moment from 'moment';
+import * as moment from 'moment-timezone';
 export const app = express()
 const port = 3000
 
@@ -18,8 +18,8 @@ function fromTemplate(title: string, body: string): string {
         <title>${title}</title>
       </head>
       <body>
-        ${body}
-        generated: ${moment().format('MMMM Do YYYY, h:mm:ss a')}
+        <div class="card"><div class="card-body">${body}</div></div>
+        generated: ${moment().tz(process.env.TZ).format('MMMM Do YYYY, h:mm:ss a z')}
         <!-- Optional JavaScript -->
         <!-- jQuery first, then Popper.js, then Bootstrap JS -->
         <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
@@ -29,7 +29,9 @@ function fromTemplate(title: string, body: string): string {
     </html>`
 }
 
-app.get('/', (req, res) => res.send('Hello World!'))
+app.get('/', (req, res) => {
+    res.send(fromTemplate('scores', ''));
+})
 app.get('/rank', async (req, res) => {
     try {
         const result = await db.getHighScores(75);
@@ -55,8 +57,7 @@ app.get('/inspect/*', async (req,res) => {
         if(!results.worked) throw 'error';
         let response = `<div><h1>${results.name}</h1></div><div>points: ${results.points}.</div><div><table class='table table-striped table-bordered table-hover'><thead><tr><th>Name</th><th>Points</th><th>Date</th><th>With</th></tr></thead>`;
         results.events.forEach((e)=>{
-            if(e.with.length ==0) e.with.push('none');
-            response+=`<tr><td>${e.name}</td><td>${e.points}</td><td>${e.date}</td><td>${e.with}</td><tr/>`;
+            response+=`<tr><td>${e.name}</td><td>${e.points}</td><td>${e.date}</td><td>${e.with.length==0?'none':e.with.toString()}</td><tr/>`;
         });
         response+="</table>"
         res.send(fromTemplate(`inspect ${results.name}`, response));

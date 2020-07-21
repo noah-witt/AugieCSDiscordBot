@@ -1,11 +1,10 @@
 import * as mongoose from 'mongoose';
-import * as moment from 'moment';
+import * as moment from 'moment-timezone';
 mongoose.connect(process.env.MONGO, {
     useNewUrlParser: true,
     useUnifiedTopology: true
 });
 import * as models from './models';
-import { model } from 'mongoose';
 export interface matchObj {
     name: string;
     teams: teamObj[];
@@ -21,7 +20,23 @@ export interface inspectUserResults {
     name: string;
     email: string;
     id: string;
-    events: {name: string, points: number, with:string[], date:string, id:string}[]
+    events: {name: string, points: number, with:Person[], date:string, id:string}[]
+}
+
+class Person {
+    readonly name: string;
+    readonly email: string;
+    readonly points: number;
+    readonly id: any;
+    constructor(name: string, email: string, points: number, id: any){
+        this.name = name;
+        this.email = email;
+        this.points = points;
+        this.id = id;
+    }
+    toString(){
+        return `${this.name} <${this.email}>`;
+    }
 }
 
 export async function inspectUserById(id: string): Promise<inspectUserResults> {
@@ -51,13 +66,13 @@ async function inspectUserBack(person: models.PersonDoc): Promise<inspectUserRes
         let events = [];
         let pointCounter =0;
         matches.forEach((e)=>{
-            const event = {name: e.name, points: e.points, with:[], date: moment(e.createdAt).format('MMMM Do YYYY, h:mm:ss a'), id:e._id};
+            const event = {name: e.name, points: e.points, with:[], date: moment(e.createdAt).tz(process.env.TZ).format('MMMM Do YYYY, h:mm:ss a z'), id:e._id};
             //add the other people.
             for(let i=0;i<e.people.length;i++) {
                 const target = e.people[i];
                 if(target instanceof mongoose.mongo.ObjectID) return {worked: false, points:0, events:[], name:null, email:null}; //give up if it fails to populate.
                 if(target.email == person.email) continue; //skip this if it is the inspected user.
-                event.with.push(target.name+" <"+target.email+">");
+                event.with.push(new Person(target.name, target.email, target.points, target._id));
             }
             events.push(event);
             pointCounter+=event.points;
@@ -178,7 +193,7 @@ export async function removeByMatchId(id: any): Promise<removedEventResponse> {
         user.save();
     }
     models.Match.findByIdAndDelete(response._id).exec();
-    return {worked: true, event:{name: response.name, points: response.points, date: moment(response.createdAt).format('MMMM Do YYYY, h:mm:ss a')}}
+    return {worked: true, event:{name: response.name, points: response.points, date: moment(response.createdAt).tz(process.env.TZ).format('MMMM Do YYYY, h:mm:ss a z')}}
 }
 
 export function validateObjectID(id: string): boolean {
