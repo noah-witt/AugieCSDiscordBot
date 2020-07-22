@@ -57,7 +57,14 @@ app.get('/inspect/*', async (req,res) => {
         if(!results.worked) throw 'error';
         let response = `<div><h1>${results.name}</h1></div><div>points: ${results.points}.</div><div><table class='table table-striped table-bordered table-hover'><thead><tr><th>Name</th><th>Points</th><th>Date</th><th>With</th></tr></thead>`;
         results.events.forEach((e)=>{
-            response+=`<tr><td>${e.name}</td><td>${e.points}</td><td>${e.date}</td><td>${e.with.length==0?'none':e.with.toString()}</td><tr/>`;
+            let withStr = "";
+            if(e.with.length==0) withStr = "none";
+            e.with.forEach((p)=>{
+                withStr+=`<a href="/inspect/${p.id}"> ${p.name}</a>,`
+            });
+            if(e.with.length==0) withStr = "none";
+            else withStr = withStr.substr(0,withStr.length-1);
+            response+=`<tr><td>${e.name}</td><td>${e.points}</td><td>${e.date}</td><td>${withStr}</td><tr/>`;
         });
         response+="</table>"
         res.send(fromTemplate(`inspect ${results.name}`, response));

@@ -199,3 +199,17 @@ export async function removeByMatchId(id: any): Promise<removedEventResponse> {
 export function validateObjectID(id: string): boolean {
     return mongoose.mongo.ObjectID.isValid(id);
 }
+
+export async function renameUser(email: string, name: string): Promise<Boolean> {
+    try {
+        const users = await models.Person.find({email: email}).exec();
+        if(users.length!=1) return false;
+        const user = users[0];
+        user.name = name;
+        await user.save();
+        return true;
+    } catch {
+        return false;
+    }
+    return false;
+}
