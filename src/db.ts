@@ -1,11 +1,10 @@
 import * as mongoose from 'mongoose';
-import * as moment from 'moment';
+import * as moment from 'moment-timezone';
 mongoose.connect(process.env.MONGO, {
     useNewUrlParser: true,
     useUnifiedTopology: true
 });
 import * as models from './models';
-import { model } from 'mongoose';
 export interface matchObj {
     name: string;
     teams: teamObj[];
@@ -20,25 +19,60 @@ export interface inspectUserResults {
     points: number;
     name: string;
     email: string;
-    events: {name: string, points: number, with:string[], date:string, id:string}[]
+    id: string;
+    events: {name: string, points: number, with:Person[], date:string, id:string}[]
 }
+
+class Person {
+    readonly name: string;
+    readonly email: string;
+    readonly points: number;
+    readonly id: any;
+    constructor(name: string, email: string, points: number, id: any){
+        this.name = name;
+        this.email = email;
+        this.points = points;
+        this.id = id;
+    }
+    toString(){
+        return `${this.name} <${this.email}>`;
+    }
+}
+
+export async function inspectUserById(id: string): Promise<inspectUserResults> {
+    try {
+        let person = await models.Person.findById(id).exec();
+        return await inspectUserBack(person);
+    } catch {
+        return {worked: false, points:0, events:[], name:null, email:null, id:null};
+    }
+    return {worked: false, points:0, events:[], name:null, email:null, id:null};
+} 
 
 export async function inspectUser(email: string): Promise<inspectUserResults> {
     try {
         email = email.trim().toLowerCase();
         let person = await models.Person.findOne({email:email}).exec();
+        return await inspectUserBack(person);
+    } catch {
+        return {worked: false, points:0, events:[], name:null, email:null, id:null};
+    }
+    return {worked: false, points:0, events:[], name:null, email:null, id:null};
+}
+async function inspectUserBack(person: models.PersonDoc): Promise<inspectUserResults> {
+    try {
         let matches = await models.Match.find({"people": person._id}).sort({createdAt: -1}).populate({path: "people", model:"Person"}).exec();
-        if(matches.length<1) return {worked: false, points:0, events:[], name:null, email:null};
+        if(matches.length<1) return {worked: false, points:0, events:[], name:null, email:null, id:null};
         let events = [];
         let pointCounter =0;
         matches.forEach((e)=>{
-            const event = {name: e.name, points: e.points, with:[], date: moment(e.createdAt).format('MMMM Do YYYY, h:mm:ss a'), id:e._id};
+            const event = {name: e.name, points: e.points, with:[], date: moment(e.createdAt).tz(process.env.TZ).format('MMMM Do YYYY, h:mm:ss a z'), id:e._id};
             //add the other people.
             for(let i=0;i<e.people.length;i++) {
                 const target = e.people[i];
                 if(target instanceof mongoose.mongo.ObjectID) return {worked: false, points:0, events:[], name:null, email:null}; //give up if it fails to populate.
-                if(target.email == email) continue; //skip this if it is the inspected user.
-                event.with.push(target.name+" <"+target.email+">");
+                if(target.email == person.email) continue; //skip this if it is the inspected user.
+                event.with.push(new Person(target.name, target.email, target.points, target._id));
             }
             events.push(event);
             pointCounter+=event.points;
@@ -46,16 +80,16 @@ export async function inspectUser(email: string): Promise<inspectUserResults> {
         if(pointCounter!=person.points) {
             console.log("POINTS DO NOT MATCH!!!! DATABASE ERROR. User "+person.email+" counter:"+pointCounter+", userEntry:"+person.points);
         }
-        return {worked: true, points:person.points, events: events, name:person.name, email:person.email};
+        return {worked: true, points:person.points, events: events, name:person.name, email:person.email, id:person._id};
     } catch {
-        return {worked: false, points:0, events:[], name:null, email:null};
+        return {worked: false, points:0, events:[], name:null, email:null, id:null};
     }
-    return {worked: false, points:0, events:[], name:null, email:null};
+    return {worked: false, points:0, events:[], name:null, email:null, id:null};;
 }
 
 export interface highScoreGetResponse {
     worked: boolean;
-    results: {name: string; email:string; score:number;}[];
+    results: {name: string; email:string; score:number; id: string;}[];
 }
 
 /**
@@ -71,7 +105,7 @@ export async function getHighScores(results: number): Promise<highScoreGetRespon
         let output: highScoreGetResponse = {worked: true, results:[]}
         for(let i=0;i<result.length; i++) {
             let targetUser = result[i];
-            output.results.push({name: targetUser.name, email: targetUser.email, score: targetUser.points});
+            output.results.push({name: targetUser.name, email: targetUser.email, score: targetUser.points, id: targetUser._id});
         }
         return output;
     } catch {
@@ -159,5 +193,23 @@ export async function removeByMatchId(id: any): Promise<removedEventResponse> {
         user.save();
     }
     models.Match.findByIdAndDelete(response._id).exec();
-    return {worked: true, event:{name: response.name, points: response.points, date: moment(response.createdAt).format('MMMM Do YYYY, h:mm:ss a')}}
+    return {worked: true, event:{name: response.name, points: response.points, date: moment(response.createdAt).tz(process.env.TZ).format('MMMM Do YYYY, h:mm:ss a z')}}
+}
+
+export function validateObjectID(id: string): boolean {
+    return mongoose.mongo.ObjectID.isValid(id);
+}
+
+export async function renameUser(email: string, name: string): Promise<Boolean> {
+    try {
+        const users = await models.Person.find({email: email}).exec();
+        if(users.length!=1) return false;
+        const user = users[0];
+        user.name = name;
+        await user.save();
+        return true;
+    } catch {
+        return false;
+    }
+    return false;
 }

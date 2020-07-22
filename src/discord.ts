@@ -58,7 +58,7 @@ async function inspectUser(m: discord.Message, email: string, showID?: boolean) 
         "points: "+response.points+" matches:"+response.events.length+"\n"+
         "matches list\n\n";
         response.events.forEach((e)=>{
-            msg+="name: "+e.name+"\t date:"+e.date+"\t points:"+e.points+"\t with:"+e.with;
+            msg+="name: "+e.name+"\t date:"+e.date+"\t points:"+e.points+"\t with: "+(e.with.length==0?'none':e.with.toString());
             if(showID==true) msg+=" id:"+e.id;
             msg+="\n";
         });
@@ -100,7 +100,8 @@ client.on('message', async message => {
                                             "inspect {email} inspects the user. prints all results.\n"+
                                             "inspect show id {email}. inspects the user and prints ids for events.\n"+
                                             "rm recent. removes the most recent change. Think of this as undo.\n"+
-                                            "rm {id}. removes the event with the stated id." );
+                                            "rm {id}. removes the event with the stated id.\n"+
+                                            "rename user {email} {name}. changes the users name" );
             return;
         case "rank":
             printRank(message);
@@ -165,6 +166,24 @@ client.on('message', async message => {
         let id = message.content.substr("rm ".length);
         const rmMsg = await db.removeByMatchId(id);
         printRmMsg(rmMsg, message);
+        return;
+    }
+    if(message.content.startsWith("rename user ")){
+        let cmds = message.content.substr("create user ".length).split(' ');
+        for(let i=0; i<cmds.length; i++) cmds[i] = cmds[i].trim();
+
+        //re concat the names
+        for(let i=cmds.length; i>2;i--) {
+            cmds[i-2]+=" "+cmds.pop();
+        }
+        if(cmds.length!=2) {
+            message.channel.send("you either have too many or two few arguments.");
+            return;
+        };
+        
+        const response = await db.renameUser(cmds[0], cmds[1]);
+        if(response == false) message.channel.send('did not work.');
+        else message.channel.send('worked.');
         return;
     }
     message.channel.send("Ask for help by sending \"help\".");
