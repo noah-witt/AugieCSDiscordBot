@@ -5,20 +5,25 @@ services:
   mongo:
     image: mongo
     restart: always
-    environment:
     volumes:
+      - augie_cs_discord_bot_mongo_db:/data/db
         
 
   augie_cs_discord_bot:
     build: .
     restart: always
     ports:
-      - localhost:8080:8080
+      - 127.0.0.1:8484:8080
     environment:
+      - MONGO='mongodb://db:27017/results2020'
       MONGO: mongodb://db:27017/results2020
       discordLogin: <FILL IN DISCORD LOGIN>
       discordChannelId: <FILL IN CHANNEL ID>
       TZ: America/Chicago
       enableWeb: true
+      - TZ="America/Chicago"
+      - enableWeb="true"
     links:
       - "mongo:db"
+volumes:
+  augie_cs_discord_bot_mongo_db:
