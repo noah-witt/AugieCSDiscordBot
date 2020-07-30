@@ -11,6 +11,7 @@ services:
 
   augie_cs_discord_bot:
     build: .
+    image: docker.pkg.github.com/noah-witt/AugieCSDiscordBot:0.1
     restart: always
     ports:
       - 127.0.0.1:8484:8080

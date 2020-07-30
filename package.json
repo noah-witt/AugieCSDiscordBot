@@ -1,8 +1,9 @@
 {
-    "name": "augieCSdiscordBot",
+    "name": "@noah-witt/augiecsdiscordbot",
     "version": "0.0.1",
     "description": "",
     "main": "/build/start.js",
+    "publishConfig": { "registry": "https://npm.pkg.github.com/" },
     "scripts": {
         "start": "node build/start.js",
         "build": "tsc"
