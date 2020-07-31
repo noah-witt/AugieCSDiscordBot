@@ -25,7 +25,7 @@ async function printRank(m: discord.Message){
     data.results.forEach((e)=>{
         msg+=(e.name+"\t\t\t"+e.score+"\t\t\t"+e.email+"\n");
     });
-    m.channel.send(msg);
+    m.channel.send(msg+`\n View On Web: ${process.env.WebLink}/rank`);
     return true;
 }  
 
@@ -62,7 +62,7 @@ async function inspectUser(m: discord.Message, email: string, showID?: boolean) 
             if(showID==true) msg+=" id:"+e.id;
             msg+="\n";
         });
-        m.channel.send(msg);
+        m.channel.send(msg+`\nWeb: ${process.env.WebLink}/inspect/${response.id}`);
     } catch {
         m.channel.send("something went wrong.");
     }
@@ -101,7 +101,8 @@ client.on('message', async message => {
                                             "inspect show id {email}. inspects the user and prints ids for events.\n"+
                                             "rm recent. removes the most recent change. Think of this as undo.\n"+
                                             "rm {id}. removes the event with the stated id.\n"+
-                                            "rename user {email} {name}. changes the users name" );
+                                            "rename user {email} {name}. changes the users name\n"+
+                                            `----------\n view rank: ${process.env.WebLink}/rank` );
             return;
         case "rank":
             printRank(message);

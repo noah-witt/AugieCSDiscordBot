@@ -18,6 +18,11 @@ function fromTemplate(title: string, body: string): string {
         <title>${title}</title>
       </head>
       <body>
+        <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="">Augie Computer Science Club Rankings &nbsp;&nbsp;&nbsp;</li>  <li class=""><a href="/rank">View Rankings</a></li>
+        </ol>
+        </nav>
         <div class="card"><div class="card-body">${body}</div></div>
         generated: ${moment().tz(process.env.TZ).format('MMMM Do YYYY, h:mm:ss a z')}
         <!-- Optional JavaScript -->
