@@ -76,6 +76,6 @@ app.get('/inspect/*', async (req,res) => {
         response+="</table>"
         res.send(fromTemplate(`inspect ${results.name}`, response));
     } catch (error){
-        res.send('that did not work');
+        res.send('that did not work<br/>Does this user have any points?');
     }
 });
