@@ -20,12 +20,12 @@ function fromTemplate(title: string, body: string): string {
       </head>
       <body>
         <nav aria-label="breadcrumb">
-        <ol class="breadcrumb">
+        <ol class="breadcrumb d-print-none">
             <li class="">Augie Computer Science Club Rankings &nbsp;&nbsp;&nbsp;</li>  <li class=""><a href="/rank">View Rankings</a></li>
         </ol>
         </nav>
         <div class="card"><div class="card-body">${body}</div></div>
-        generated: ${moment().tz(process.env.TZ).format('MMMM Do YYYY, h:mm:ss a z')}
+        generated: ${moment().tz(process.env.TZ).format('MMMM Do YYYY, h:mm:ss a')} ${process.env.TZ}
         <!-- Optional JavaScript -->
         <!-- jQuery first, then Popper.js, then Bootstrap JS -->
         <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js" integrity="sha384-DfXdz2htPH0lsSSs5nCTpuj/zy4C+OGpamoFVy38MVBnE+IbbVYUew+OrCXaRkfj" crossorigin="anonymous"></script>
@@ -71,7 +71,7 @@ app.get('/inspect/*', async (req,res) => {
             });
             if(e.with.length==0) withStr = "none";
             else withStr = withStr.substr(0,withStr.length-1);
-            response+=`<tr class='tooltip-filler' data-toggle='tooltip' data-placement='bottom' title='click to copy id (${e.id})' onClick='navigator.clipboard.writeText("${e.id}")'><td>${e.name}</td><td>${e.points}</td><td>${e.date}</td><td>${withStr}</td><tr/>`;
+            response+=`<tr><td class='tooltip-filler' data-toggle='tooltip' data-placement='bottom' title='click to copy id (${e.id})' onClick='navigator.clipboard.writeText("${e.id}")'>${e.name}</td><td>${e.points}</td><td>${e.date}</td><td>${withStr}</td><tr/>`;
         });
         response+="</table>"
         res.send(fromTemplate(`inspect ${results.name}`, response));
