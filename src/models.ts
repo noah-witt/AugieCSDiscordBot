@@ -1,5 +1,4 @@
 import { createSchema, Type, typedModel,ExtractDoc, ExtractProps } from 'ts-mongoose';
-import { type } from 'os';
 const PersonSchema = createSchema(
   {
     name: Type.string({ required: true }),
@@ -9,6 +8,10 @@ const PersonSchema = createSchema(
   { _id: true, timestamps: true }
 );
 export const Person = typedModel('Person', PersonSchema, undefined, undefined, {
+  /**
+   * @deprecated
+   * @param email the email your finding.
+   */
   findByEmail: function(email: string) {
     return this.find({ email });
   }
