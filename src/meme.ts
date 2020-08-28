@@ -128,7 +128,6 @@ export async function sendXKCD(num: number){
         const target: xkcdInfoJson = (await tiny.get({url: `https://xkcd.com/${num}/info.0.json`})).body;
         const channel = await getRedditChannel();
         channel.send(`XKCD ${target.num}: ${target.safe_title}\n ${target.img}`);
-        channel.send(target.img);
     } catch (error) {
         console.log(error);
     }
