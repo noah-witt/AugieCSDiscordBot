@@ -91,7 +91,7 @@ export async function postMemes(){
 function getNextWakeupTime():moment.Moment {
     const time = moment().tz(process.env.TZ).startOf('day');
     while((!time.isAfter(moment())) || time.hour()>Number.parseInt(process.env.quietHourBegin) || time.hour()<Number.parseInt(process.env.quietHourEnd) ) time.add(process.env.minutesBetweenPosts, 'minutes');
-    //console.log("next wakeup "+time.toString());
+    console.log("next meme send "+time.toString());
     return time;
 }
 
