@@ -31,3 +31,11 @@ const MatchSchema = createSchema(
 export const Match = typedModel('Match', MatchSchema);
 export type MatchDoc = ExtractDoc<typeof MatchSchema>;
 export type MatchProps = ExtractProps<typeof MatchSchema>;
+
+const RedditPostSchema = createSchema({
+  postId: Type.string({required:true, index: true}),
+  subId: Type.string({required: true, indes: true})
+},{ _id: true, timestamps: true });
+export const RedditPost = typedModel('RedditPost', RedditPostSchema);
+export type RedditPostDoc = ExtractDoc<typeof RedditPostSchema>;
+export type RedditPostProps = ExtractProps<typeof RedditPostSchema>;

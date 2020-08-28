@@ -29,9 +29,18 @@ async function printRank(m: discord.Message){
     return true;
 }  
 
+/**
+ * verifies that the channel is a text channel. 
+ * acts as a typegaurd.
+ * @param d the channel
+ */
 function isTextChannel(d: discord.TextChannel | discord.Channel): d is discord.TextChannel {
     return d.type==='text';
 }
+
+/**
+ * @returns the reddit meme posting channel.
+ */
 export async function getRedditChannel(): Promise<discord.TextChannel>{
     const c = await client.channels.fetch(process.env.redditChannelId);
     if(!isTextChannel(c)) throw("wrong channel type");

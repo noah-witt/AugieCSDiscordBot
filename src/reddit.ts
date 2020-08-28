@@ -1,6 +1,6 @@
-import reddit from 'reddit-wrapper-v2';
 import * as tiny from 'tiny-json-http';
 import {getRedditChannel, client} from './discord';
+import {RedditPost} from './models';
 //https://www.reddit.com/r/ProgrammerHumor/top/
 interface subredditResult {
     kind: string;
@@ -12,7 +12,6 @@ interface subredditResult {
         children: subredditPostResult[];
     }
 }
-
 interface subredditPostResult {
     kind: string,
     data: {
@@ -38,6 +37,20 @@ interface subredditPostResult {
         is_video: boolean;
     }
 }
+
+/**
+ * @returns true if the item has been sent before and is stored in the DB.
+ * @param item the item to check
+ */
+async function notSentBefore(item: subredditPostResult): Promise<boolean>{
+    const result = await RedditPost.find({postId: item.data.id, subId: item.data.subreddit_id});
+    return result.length==0;
+}
+
+
+/**
+ * @description posts most recent meme to the discord channel.
+ */
 export async function postMemes(){
     try {
         let result = await tiny.get({
@@ -45,7 +58,18 @@ export async function postMemes(){
         });
         const data: subredditResult = result.body;
         const channel = await getRedditChannel();
-        channel.send(`Top post on reddit. `)
+        let target = data.data.children[0];
+        let i =1;
+        while(await notSentBefore(target)) {
+            target = data.data.children[i];
+            i++;
+        }
+        const p = new RedditPost();
+        p.subId = target.data.subreddit_id;
+        p.postId = target.data.id;
+        p.save();
+
+        channel.send(`${target.data.url}`);
     }
     catch(error){
         console.log(error);
