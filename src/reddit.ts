@@ -90,7 +90,8 @@ export async function postMemes(){
  */
 function getNextWakeupTime():moment.Moment {
     const time = moment().tz(process.env.TZ).startOf('day');
-    while(!time.isAfter(moment())) time.add(process.env.minutesBetweenPosts, 'minutes');
+    while((!time.isAfter(moment())) || time.hour()>Number.parseInt(process.env.quietHourBegin) || time.hour()<Number.parseInt(process.env.quietHourEnd) ) time.add(process.env.minutesBetweenPosts, 'minutes');
+    //console.log("next wakeup "+time.toString());
     return time;
 }
 
@@ -118,7 +119,7 @@ export async function postMemeSchedule() {
 }
 
 /** 
- * bootstrap 
+ * bootstrap and waits a few seconds to hopefully make sure things are working at least sorta.
 */
 export async function bootstrap() {
     setTimeout(scheduleNextSend, 15000);

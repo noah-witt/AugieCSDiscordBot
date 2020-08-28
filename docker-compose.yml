@@ -16,6 +16,7 @@ services:
     ports:
       - 127.0.0.1:8484:8080
     env_file:
+      - example.env
       - .env
     links:
       - "mongo:db"
