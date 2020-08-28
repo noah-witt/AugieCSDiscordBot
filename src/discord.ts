@@ -29,6 +29,15 @@ async function printRank(m: discord.Message){
     return true;
 }  
 
+function isTextChannel(d: discord.TextChannel | discord.Channel): d is discord.TextChannel {
+    return d.type==='text';
+}
+export async function getRedditChannel(): Promise<discord.TextChannel>{
+    const c = await client.channels.fetch(process.env.redditChannelId);
+    if(!isTextChannel(c)) throw("wrong channel type");
+    return c;
+}
+
 async function processDm(m: discord.Message){
     switch(m.content) {
         case "rank":
