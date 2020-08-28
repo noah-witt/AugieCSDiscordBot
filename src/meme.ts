@@ -168,7 +168,7 @@ export async function postMemes(){
             i++;
         }
         storePost(target);
-        channel.send(`${target.data.url}`);
+        channel.send(`${target.data.title} by ${target.data.author} \n${target.data.url}`);
     }
     catch(error){
         console.log(error);
