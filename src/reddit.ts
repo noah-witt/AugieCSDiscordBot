@@ -1,6 +1,7 @@
 import * as tiny from 'tiny-json-http';
 import {getRedditChannel, client} from './discord';
 import {RedditPost} from './models';
+import * as moment from 'moment-timezone';
 //https://www.reddit.com/r/ProgrammerHumor/top/
 interface subredditResult {
     kind: string;
@@ -47,9 +48,21 @@ async function notSentBefore(item: subredditPostResult): Promise<boolean>{
     return result.length==0;
 }
 
+/**
+ * records the record of posting.
+ * @param item the meme.
+ */
+function storePost(item: subredditPostResult) {
+    const p = new RedditPost();
+    p.subId = item.data.subreddit_id;
+    p.postId = item.data.id;
+    p.save();
+}
 
 /**
  * @description posts most recent meme to the discord channel.
+ * makes sure it isnt posted before.
+ * this fails silently and just prints to log. This is to prevent any errors from killing the app.
  */
 export async function postMemes(){
     try {
@@ -60,18 +73,53 @@ export async function postMemes(){
         const channel = await getRedditChannel();
         let target = data.data.children[0];
         let i =1;
-        while(await notSentBefore(target)) {
+        while(!(await notSentBefore(target))) {
             target = data.data.children[i];
             i++;
         }
-        const p = new RedditPost();
-        p.subId = target.data.subreddit_id;
-        p.postId = target.data.id;
-        p.save();
-
+        storePost(target);
         channel.send(`${target.data.url}`);
     }
     catch(error){
         console.log(error);
     }
+}
+
+/**
+ * @description generates the next time that a post should be sent.
+ */
+function getNextWakeupTime():moment.Moment {
+    const time = moment().tz(process.env.TZ).startOf('day');
+    while(!time.isAfter(moment())) time.add(process.env.minutesBetweenPosts, 'minutes');
+    return time;
+}
+
+/**
+ * returns the seconds till next wakeup time.
+ */
+function secondsTillNextWakeupTime() {
+    return getNextWakeupTime().unix()-moment().unix();
+}
+
+/**
+ * schedules the next meme post using the wakeuptime system.
+ * this will loop and then schedule the next wakeup.
+ */
+export function scheduleNextSend() {
+    setTimeout(postMemeSchedule, secondsTillNextWakeupTime()*1000);
+}
+
+/**
+ * posts memes and then schedules the next post.
+ */
+export async function postMemeSchedule() {
+    await postMemes();
+    scheduleNextSend();
+}
+
+/** 
+ * bootstrap 
+*/
+export async function bootstrap() {
+    setTimeout(scheduleNextSend, 15000);
 }

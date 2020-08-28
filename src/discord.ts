@@ -1,5 +1,6 @@
 import * as discord from 'discord.js';
 import * as db from './db';
+import {postMemes} from './reddit';
 export const client = new discord.Client();
 
 
@@ -95,6 +96,15 @@ function printRmMsg(dbMsg: db.removedEventResponse, m: discord.Message){
     m.channel.send("removed record:\n name: "+dbMsg.event.name+" date:"+dbMsg.event.date+" points:"+dbMsg.event.points); 
 }
 
+/**
+ * deal with message in reddit channel.
+ * @param message the message
+ */
+function processRedditM(message: discord.Message) {
+    if(message.content.trim().toLowerCase()!=='/reddit') return;
+    postMemes();
+}
+
 client.on('message', async message => {
     //dont look at anything from bots.
     if(message.author.bot) return;
@@ -104,6 +114,11 @@ client.on('message', async message => {
         processDm(message);
         return;
     } 
+
+    if(message.channel.id.trim()==process.env.redditChannelId.trim()) {
+        processRedditM(message);
+        return;
+    }
     //only look at this channel.
     if(message.channel.valueOf()!=process.env.discordChannelId) return;
 
