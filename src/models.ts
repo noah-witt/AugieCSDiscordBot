@@ -34,8 +34,16 @@ export type MatchProps = ExtractProps<typeof MatchSchema>;
 
 const RedditPostSchema = createSchema({
   postId: Type.string({required:true, index: true}),
-  subId: Type.string({required: true, indes: true})
+  subId: Type.string({required: true, index: true})
 },{ _id: true, timestamps: true });
 export const RedditPost = typedModel('RedditPost', RedditPostSchema);
 export type RedditPostDoc = ExtractDoc<typeof RedditPostSchema>;
 export type RedditPostProps = ExtractProps<typeof RedditPostSchema>;
+
+const KeyValueSchema = createSchema({
+  key: Type.string({required:true, index: true, unique: true}),
+  value: Type.string({required: true, index: false})
+},{ _id: true, timestamps: false });
+export const KeyValue = typedModel('KeyValue', KeyValueSchema);
+export type KeyValueDoc = ExtractDoc<typeof KeyValueSchema>;
+export type KeyValueProps = ExtractProps<typeof KeyValueSchema>;

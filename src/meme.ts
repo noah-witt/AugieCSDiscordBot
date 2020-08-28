@@ -1,8 +1,7 @@
 import * as tiny from 'tiny-json-http';
 import {getRedditChannel, client} from './discord';
-import {RedditPost} from './models';
+import {RedditPost, KeyValue} from './models';
 import * as moment from 'moment-timezone';
-//https://www.reddit.com/r/ProgrammerHumor/top/
 interface subredditResult {
     kind: string;
     data: {
@@ -51,6 +50,41 @@ interface xkcdInfoJson {
     img: string,
     title: string,
     day: number
+}
+/**
+ * the number of minutes between XKCD updates.
+ */
+const XKCDPollRate: number = 60;
+
+/**
+ * schedule the next XKCD update.
+ */
+export function scheduleNextXKCD() {
+    setTimeout(pollXKCD, XKCDPollRate*60*1000);
+}
+
+/**
+ * poll xkcd then schedule next update.
+ */
+export async function pollXKCD (){
+    try {
+        const newest: xkcdInfoJson = (await tiny.get({url: "https://xkcd.com/info.0.json"})).body;
+        const latestPosted = await KeyValue.find({key:"latestXKCD"}).exec();
+        if(latestPosted.length==0) {
+            sendNewestXKCD();
+            const latestPosted = new KeyValue();
+            latestPosted.key = "latestXKCD";
+            latestPosted.value = newest.num.toString();
+            latestPosted.save();
+        } else if(Number.parseInt(latestPosted[0].value)<newest.num) {
+            sendNewestXKCD();
+            latestPosted[0].value = newest.num.toString();
+            latestPosted[0].save();
+        }
+    } catch (error){
+        console.log(error);
+    }
+    scheduleNextXKCD();
 }
 
 /**
@@ -179,4 +213,5 @@ export async function postMemeSchedule() {
 */
 export async function bootstrap() {
     setTimeout(scheduleNextSend, 15000);
+    setTimeout(pollXKCD, 10000);
 }
