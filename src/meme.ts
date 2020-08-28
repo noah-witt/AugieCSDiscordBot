@@ -39,6 +39,62 @@ interface subredditPostResult {
     }
 }
 
+interface xkcdInfoJson {
+    month: number,
+    num: number,
+    link: string,
+    year: number,
+    news: string,
+    safe_title: string,
+    transcript: string,
+    alt: string,
+    img: string,
+    title: string,
+    day: number
+}
+
+/**
+ * sends a random XKCD
+ */
+export async function sendRandomXKCD(){
+    try {
+        const newest: xkcdInfoJson = (await tiny.get({url: "https://xkcd.com/info.0.json"})).body;
+        const num = Math.floor(Math.random()*(newest.num-1+1)+1);
+        sendXKCD(num);
+
+    } catch (error) {
+        console.log(error);
+    }
+}
+
+/**
+ * sends the newest XKCD
+ */
+export async function sendNewestXKCD(){
+    try {
+        const newest: xkcdInfoJson = (await tiny.get({url: "https://xkcd.com/info.0.json"})).body;
+        const channel = await getRedditChannel();
+        channel.send(`XKCD ${newest.num}: ${newest.safe_title} \n ${newest.img}`);
+
+    } catch (error) {
+        console.log(error);
+    }
+}
+/**
+ * sends the number of XKCD
+ * @param num the number
+ */
+export async function sendXKCD(num: number){
+    try {
+        const target: xkcdInfoJson = (await tiny.get({url: `https://xkcd.com/${num}/info.0.json`})).body;
+        const channel = await getRedditChannel();
+        channel.send(`XKCD ${target.num}: ${target.safe_title}\n ${target.img}`);
+        channel.send(target.img);
+    } catch (error) {
+        console.log(error);
+    }
+}
+
 /**
  * @returns true if the item has been sent before and is stored in the DB.
  * @param item the item to check
@@ -61,7 +117,7 @@ function storePost(item: subredditPostResult) {
 
 /**
  * @description posts most recent meme to the discord channel.
- * makes sure it isnt posted before.
+ * makes sure it isn't posted before.
  * this fails silently and just prints to log. This is to prevent any errors from killing the app.
  */
 export async function postMemes(){

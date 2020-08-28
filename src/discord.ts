@@ -1,6 +1,6 @@
 import * as discord from 'discord.js';
 import * as db from './db';
-import {postMemes} from './reddit';
+import * as meme from './meme';
 export const client = new discord.Client();
 
 
@@ -101,8 +101,33 @@ function printRmMsg(dbMsg: db.removedEventResponse, m: discord.Message){
  * @param message the message
  */
 function processRedditM(message: discord.Message) {
-    if(message.content.trim().toLowerCase()!=='/reddit') return;
-    postMemes();
+    if(message.content.trim().toLowerCase()=='/reddit') {
+        meme.postMemes();
+        return;
+    }
+
+    if(message.content.trim().toLowerCase()=='/xkcd') {
+        meme.sendRandomXKCD();
+        return;
+    }
+
+    if(message.content.trim().toLowerCase()=='/xkcd newest') {
+        meme.sendNewestXKCD();
+        return;
+    }
+    if(message.content.trim().toLowerCase().match('^/xkcd [0-9]+')) {
+        try {
+            meme.sendXKCD(Number.parseInt(message.content.trim().toLowerCase().substr(5).trim()));
+        } catch(error) {
+            console.log(error);
+            console.log(`the number has problems.`);
+        }
+        return;
+    }
+    if(message.content.trim().toLowerCase()=='/xkcd latest') {
+        meme.sendNewestXKCD();
+        return;
+    }
 }
 
 client.on('message', async message => {

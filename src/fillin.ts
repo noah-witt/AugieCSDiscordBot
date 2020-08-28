@@ -52,5 +52,6 @@ async function go(people: dateStoreFile) {
         await doUpdate(people.data[i]);
     }
     console.log("Done");
+    process.exit();
 }
 go(people);
