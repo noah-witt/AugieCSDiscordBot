@@ -8,4 +8,4 @@ ENV discordLogin xxx.xxx
 ENV discordChannelId xxx.xxx
 ENV TZ America/Chicago
 ENV enableWeb true
-CMD node /app/build/start.js
+ENTRYPOINT [ "node", "/app/build/start.js" ]
