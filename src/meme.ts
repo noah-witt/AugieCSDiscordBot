@@ -67,6 +67,11 @@ export function scheduleNextXKCD() {
  * poll xkcd then schedule next update.
  */
 export async function pollXKCD (){
+    //bypass at night
+    if(moment().hour()>Number.parseInt(process.env.quietHourBegin) || moment().hour()<Number.parseInt(process.env.quietHourEnd) ) {
+        scheduleNextXKCD();
+        return;
+    }
     try {
         const newest: xkcdInfoJson = (await tiny.get({url: "https://xkcd.com/info.0.json"})).body;
         const latestPosted = await KeyValue.find({key:"latestXKCD"}).exec();
