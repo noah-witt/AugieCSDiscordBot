@@ -1,5 +1,5 @@
 import * as tiny from 'tiny-json-http';
-import {getRedditChannel, client} from './discord';
+import {getRedditChannel} from './discord';
 import {RedditPost, KeyValue} from './models';
 import * as moment from 'moment-timezone';
 interface subredditResult {
