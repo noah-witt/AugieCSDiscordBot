@@ -1,5 +1,5 @@
 import * as tiny from 'tiny-json-http';
-import {getRedditChannel, client} from './discord';
+import {getRedditChannel} from './discord';
 import {RedditPost, KeyValue} from './models';
 import * as moment from 'moment-timezone';
 import * as dilbert from '@noahwitt/dilbertapi';
@@ -129,7 +129,6 @@ export async function sendXKCD(num: number){
         const target: xkcdInfoJson = (await tiny.get({url: `https://xkcd.com/${num}/info.0.json`})).body;
         const channel = await getRedditChannel();
         channel.send(`XKCD ${target.num}: ${target.safe_title}\n ${target.img}`);
-        channel.send(target.img);
     } catch (error) {
         console.log(error);
     }
