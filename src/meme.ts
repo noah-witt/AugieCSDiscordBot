@@ -2,6 +2,7 @@ import * as tiny from 'tiny-json-http';
 import {getRedditChannel, client} from './discord';
 import {RedditPost, KeyValue} from './models';
 import * as moment from 'moment-timezone';
+import * as dilbert from '@noahwitt/dilbertapi';
 interface subredditResult {
     kind: string;
     data: {
@@ -219,4 +220,82 @@ export async function postMemeSchedule() {
 export async function bootstrap() {
     setTimeout(scheduleNextSend, 15000);
     setTimeout(pollXKCD, 10000);
+    setTimeout(pollDilbert, 20000);
+}
+
+/**
+ * sends the latest dilbert
+ */
+export async function sendDilbertLatest() {
+    try {
+        const item = await dilbert.getLatest();
+        const channel = await getRedditChannel();
+        channel.send(`Dilbert ${item.title}, ${item.date}\n${item.url}`);
+    } catch(error) {
+        console.log(error);
+    }
+}
+
+/**
+ * send a random dilbert
+ */
+export async function sendDilbertRandom() {
+    try {
+        const item = await dilbert.getRandom();
+        const channel = await getRedditChannel();
+        channel.send(`Dilbert ${item.title}, ${item.date}\n${item.url}`);
+    } catch (error) {
+        console.log(error);
+    }
+}
+
+export async function sendDilbert(date: string) {
+    try {
+        const item = await dilbert.getByDateString(date);
+        const channel = await getRedditChannel();
+        channel.send(`Dilbert ${item.title}, ${item.date}\n${item.url}`);
+    } catch (error) {
+        console.log(error);
+    }
+}
+
+/**
+ * the number of minutes between Dilbert updates.
+ */
+const DilbertPollRate: number = 60;
+
+/**
+ * schedule the next dilbert update.
+ */
+export function scheduleNextDilbert() {
+    setTimeout(pollDilbert, DilbertPollRate*60*1000);
+}
+
+/**
+ * poll dilbert then schedule next update.
+ */
+export async function pollDilbert (){
+    //bypass at night
+    if(moment().hour()>Number.parseInt(process.env.quietHourBegin) || moment().hour()<Number.parseInt(process.env.quietHourEnd) ) {
+        scheduleNextDilbert();
+        return;
+    }
+    try {
+        const newest = await dilbert.getLatest();
+        const latestPosted = await KeyValue.find({key:"latestDilbert"}).exec();
+        if(latestPosted.length==0) {
+            sendDilbertLatest();
+            const latestPosted = new KeyValue();
+            latestPosted.key = "latestDilbert";
+            latestPosted.value = newest.date;
+            latestPosted.save();
+        } else if(latestPosted[0].value.trim()!=newest.date.trim()) {
+            sendDilbertLatest();
+            latestPosted[0].value = newest.date.trim();
+            latestPosted[0].save();
+        }
+    } catch (error){
+        console.log(error);
+    }
+    scheduleNextDilbert();
 }

@@ -128,6 +128,23 @@ function processRedditM(message: discord.Message) {
         meme.sendNewestXKCD();
         return;
     }
+    if(message.content.trim().toLowerCase()=='/dilbert') {
+        meme.sendDilbertRandom();
+        return;
+    }
+    if(message.content.trim().toLowerCase()=='/dilbert latest') {
+        meme.sendDilbertLatest();
+        return;
+    }
+    if(message.content.trim().toLowerCase().match('^/dilbert [0-9]{4}-[0-9]{2}-[0-9]{2}')) {
+        try {
+            meme.sendDilbert(message.content.trim().substr(8).trim());
+        } catch(error) {
+            console.log(error);
+            console.log(`the number has problems.`);
+        }
+        return;
+    }
 }
 
 client.on('message', async message => {
