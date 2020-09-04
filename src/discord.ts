@@ -1,6 +1,7 @@
 import * as discord from 'discord.js';
 import * as db from './db';
 import * as meme from './meme';
+import * as api from './api';
 export const client = new discord.Client();
 
 
@@ -260,6 +261,12 @@ client.on('message', async message => {
         const response = await db.renameUser(cmds[0], cmds[1]);
         if(response == false) message.channel.send('did not work.');
         else message.channel.send('worked.');
+        return;
+    }
+    if(message.content.startsWith("set key ")){
+        const key =message.content.substr("set key ".length);
+        await api.storeKey(key);
+        message.channel.send(`setting key as "${key}"`);
         return;
     }
     message.channel.send("Ask for help by sending \"help\".");

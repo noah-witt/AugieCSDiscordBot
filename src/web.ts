@@ -3,7 +3,10 @@ import * as db from './db';
 import * as moment from 'moment-timezone';
 import e = require('express');
 import * as api from './api';
-export const app = express()
+import * as bodyParser from 'body-parser';
+export const app = express();
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
 const port = 3000
 
 function fromTemplate(title: string, body: string): string {
@@ -41,13 +44,58 @@ app.get('/', (req, res) => {
     res.send(fromTemplate('scores', ''));
 });
 
-app.post('/api/users', (req, res) => {
-    //TODO: fill in the api endpoints.
+app.post('/api/users', async (req, res) => {
     try {
-        const data: api.message<null> = JSON.parse(req.body);
-        const result = api.getUserList(data);
+        const data: api.message<null> = req.body;
+        const result = await api.getUserList(data);
         res.send(result);
     } catch (error) {
+        res.send({});
+        console.log(error);
+    }
+});
+
+app.post('/api/inspectUser', async (req, res) => {
+    try {
+        const data: api.message<string> = req.body;
+        const result = await api.inspectUser(data);
+        res.send(result);
+    } catch (error) {
+        res.send({});
+        console.log(error);
+    }
+});
+
+app.post('/api/rank', async (req, res) => {
+    try {
+        const data: api.message<number> = req.body;
+        const result = await api.getHighScores(data);
+        res.send(result);
+    } catch (error) {
+        res.send({});
+        console.log(error);
+    }
+});
+
+
+app.post('/api/adjustment', async(req, res) => {
+    try {
+        const data: api.message<api.adjustmentRequest> = req.body;
+        const result = await api.newAdjustment(data);
+        res.send(result);
+    } catch (error) {
+        res.send({});
+        console.log(error);
+    }
+});
+
+app.post('/api/remove', async(req, res) => {
+    try {
+        const data: api.message<string> = req.body;
+        const result = await api.remove(data);
+        res.send(result);
+    } catch (error) {
+        res.send({});
         console.log(error);
     }
 });
