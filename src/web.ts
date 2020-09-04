@@ -2,6 +2,7 @@ import * as express from 'express';
 import * as db from './db';
 import * as moment from 'moment-timezone';
 import e = require('express');
+import * as api from './api';
 export const app = express()
 const port = 3000
 
@@ -38,7 +39,19 @@ function fromTemplate(title: string, body: string): string {
 
 app.get('/', (req, res) => {
     res.send(fromTemplate('scores', ''));
-})
+});
+
+app.post('/api/users', (req, res) => {
+    //TODO: fill in the api endpoints.
+    try {
+        const data: api.message<null> = JSON.parse(req.body);
+        const result = api.getUserList(data);
+        res.send(result);
+    } catch (error) {
+        console.log(error);
+    }
+});
+
 app.get('/rank', async (req, res) => {
     try {
         const result = await db.getHighScores(75);
