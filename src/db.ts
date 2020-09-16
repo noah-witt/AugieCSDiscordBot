@@ -127,6 +127,14 @@ export interface dbResponse {
  */
 export async function newAdjustment(title: string, emails: string[], points: number): Promise < dbResponse > {
     try {
+        //verify that the emails are unique.
+        for(let i=0; i< emails.length; i++) {
+            const target = emails[i];
+            for(let e=0; e< emails.length; e++){
+                if(e==i) continue;
+                if(emails[e]==target) throw "two instances of same email";
+            }
+        }
         const e = new models.Match();
         e.name = title;
         e.points =points;
